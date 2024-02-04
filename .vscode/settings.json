@@ -9,6 +9,9 @@
 	},
 	"files.associations": {
 		"stdio.h": "c",
-		"typeinfo": "c"
+		"typeinfo": "c",
+		"raylib.h": "c",
+		"stddef.h": "c",
+		"main.h": "c"
 	}
 }
