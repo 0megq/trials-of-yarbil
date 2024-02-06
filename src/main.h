@@ -48,7 +48,7 @@ struct DirectionalInput
 struct Flags
 {
 	int entityId;
-	unsigned player_input : 1;
+	unsigned playerInput : 1;
 };
 
 typedef struct EntityComponentList
@@ -68,3 +68,11 @@ typedef struct EntityComponentList
 	int idBuffer[MAX_ENTITIES];
 	int idBufferSize;
 } EntityComponentList;
+
+void DirectionalInputSystem();
+void PlayerInputSystem();
+void ApplyVelocitySystem(float delta);
+void InitializeEntityComponentList();
+int NewEntity();
+int NewPlayer();
+void FreeEntity(int entityId);
