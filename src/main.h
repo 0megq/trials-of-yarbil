@@ -38,6 +38,13 @@ struct Velocity
 	Vector2 vel;
 };
 
+// Texture Component
+struct Sprite
+{
+	int entityId;
+	Texture2D tex;
+};
+
 // There only needs to be one directional input component at a single time
 struct DirectionalInput
 {
@@ -60,6 +67,7 @@ typedef struct EntityComponentList
 	struct Collider colliderComponents[MAX_ENTITIES];
 	struct Position positionComponents[MAX_ENTITIES];
 	struct Velocity velocityComponents[MAX_ENTITIES];
+	struct Sprite spriteComponents[MAX_ENTITIES];
 	struct Flags flagsComponents[MAX_ENTITIES];
 
 	// Other data
@@ -70,6 +78,7 @@ typedef struct EntityComponentList
 } EntityComponentList;
 
 void DirectionalInputSystem();
+void DrawSpritesSystem();
 void PlayerInputSystem();
 void ApplyVelocitySystem(float delta);
 void InitializeEntityComponentList();

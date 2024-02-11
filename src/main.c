@@ -25,6 +25,8 @@ int main(void)
 
 	int playerId = NewPlayer();
 
+	components.spriteComponents[playerId].tex = LoadTexture("testsprite.png");
+
 	// Main game loop
 	while (!WindowShouldClose()) // Detect window close button or ESC key
 	{
@@ -45,9 +47,7 @@ int main(void)
 
 		ClearBackground(RAYWHITE);
 
-		Vector2 playerPos = components.positionComponents[playerId].pos;
-
-		DrawCircle((int)playerPos.x, (int)playerPos.y, 10, RED);
+		DrawSpritesSystem();
 
 		DrawText("Congrats! You created your first window!", 190, 200, 20, LIGHTGRAY);
 
@@ -76,6 +76,22 @@ void DirectionalInputSystem()
 		direction.y--;
 
 	components.directionalInputComponent.direction = direction;
+}
+
+// This must be called after BeginDrawing() and before EndDrawing()
+void DrawSpritesSystem()
+{
+	for (int i = 0, j = 0; j < components.totalActiveEntities && i < MAX_ENTITIES; i++)
+	{
+		// If the entity is not active then skip to the next iteration
+		if (!components.entityIsActive[i])
+			continue;
+
+		if (components.positionComponents[i].entityId == i && components.spriteComponents[i].entityId == i)
+			DrawTextureV(components.spriteComponents[i].tex, components.positionComponents[i].pos, WHITE);
+
+		j++;
+	}
 }
 
 void PlayerInputSystem()
