@@ -7,10 +7,19 @@
 #define TILEMAP_MAX_HEIGHT 100
 #define TILE_SIZE 16
 
+enum Element
+{
+	ELEMENT_FIRE,
+	ELEMENT_WATER,
+	ELEMENT_EARTH,
+	ELEMENT_AIR,
+	ELEMENT_NONE,
+};
+
 enum ShapeType
 {
 	TYPE_CIRCLE,
-	TYPE_RECTANGLE
+	TYPE_RECTANGLE,
 };
 
 union Shape
@@ -48,6 +57,12 @@ struct Sprite
 	Texture2D tex;
 };
 
+// Player Component
+struct Player
+{
+	enum Element playerElement;
+};
+
 // There only needs to be one directional input component at a single time
 struct DirectionalInput
 {
@@ -58,7 +73,7 @@ struct DirectionalInput
 struct Flags
 {
 	int entityId;
-	unsigned playerInput : 1;
+	unsigned receiveDirectionalInput : 1;
 };
 
 typedef struct EntityComponentList

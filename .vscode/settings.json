@@ -12,6 +12,9 @@
 		"typeinfo": "c",
 		"raylib.h": "c",
 		"stddef.h": "c",
-		"main.h": "c"
+		"main.h": "c",
+		"array": "c",
+		"string": "c",
+		"string_view": "c"
 	}
 }

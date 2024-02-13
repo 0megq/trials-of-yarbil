@@ -40,7 +40,7 @@ int main(void)
 	int playerId = NewPlayer();
 	SaveTilemap("map/map01.txt", tilemapData, sizeof(tilemapData) / sizeof(tilemapData[0]));
 
-	components.spriteComponents[playerId].tex = LoadTexture("testsprite.png");
+	components.spriteComponents[playerId].tex = LoadTexture("assets/testsprite.png");
 
 	// Main game loop
 	while (!WindowShouldClose()) // Detect window close button or ESC key
@@ -181,7 +181,7 @@ void PlayerInputSystem()
 			continue;
 
 		// Check if the entity accepts player input and if the entity has a velocity component
-		if (components.flagsComponents[i].playerInput && components.velocityComponents[i].entityId == i)
+		if (components.flagsComponents[i].receiveDirectionalInput && components.velocityComponents[i].entityId == i)
 		{
 			components.velocityComponents[i].vel = newVel;
 		}
@@ -244,7 +244,7 @@ int NewEntity()
 	components.entityIsActive[entityId] = true;
 	// Give the entity a flags component
 	components.flagsComponents[entityId].entityId = entityId;
-	components.flagsComponents[entityId].playerInput = false;
+	components.flagsComponents[entityId].receiveDirectionalInput = false;
 
 	return entityId;
 }
@@ -255,7 +255,7 @@ int NewPlayer()
 
 	components.positionComponents[playerId].entityId = playerId;
 	components.velocityComponents[playerId].entityId = playerId;
-	components.flagsComponents[playerId].playerInput = true;
+	components.flagsComponents[playerId].receiveDirectionalInput = true;
 
 	return playerId;
 }
