@@ -2,6 +2,8 @@
 #include "raymath.h"
 #include "main.h"
 #include <stddef.h>
+#include <ctype.h>
+#include <stdlib.h>
 
 EntityComponentList components;
 const float playerSpeed = 100;
@@ -13,17 +15,30 @@ int main(void)
 {
 	// Initialization
 	//--------------------------------------------------------------------------------------
-	const int screenWidth = 800;
-	const int screenHeight = 450;
+	const int screenWidth = 640;
+	const int screenHeight = 360;
 
 	InitWindow(screenWidth, screenHeight, "Trials of Yarbil");
 
 	SetTargetFPS(60); // Set our game to run at 60 frames-per-second
 	//--------------------------------------------------------------------------------------
 
+	// Setup tilemap. Tilemap data is stored in a 1D array
+	const int emptyTile = 0;
+	const int wallTile = 1;
+	int tilemapData[TILEMAP_MAX_WIDTH * TILEMAP_MAX_HEIGHT];
+	for (size_t i = 0; i < sizeof(tilemapData) / sizeof(tilemapData[0]); i++)
+	{
+		tilemapData[i] = emptyTile;
+	}
+
+	tilemapData[1] = wallTile;
+	tilemapData[4] = wallTile;
+
 	InitializeEntityComponentList();
 
 	int playerId = NewPlayer();
+	SaveTilemap("map/map01.txt", tilemapData, sizeof(tilemapData) / sizeof(tilemapData[0]));
 
 	components.spriteComponents[playerId].tex = LoadTexture("testsprite.png");
 
@@ -44,13 +59,13 @@ int main(void)
 		// Draw
 		//----------------------------------------------------------------------------------
 		BeginDrawing();
+		{
+			ClearBackground(RAYWHITE);
 
-		ClearBackground(RAYWHITE);
+			DrawTilemap(tilemapData, TILEMAP_MAX_WIDTH, TILEMAP_MAX_HEIGHT);
 
-		DrawSpritesSystem();
-
-		DrawText("Congrats! You created your first window!", 190, 200, 20, LIGHTGRAY);
-
+			DrawSpritesSystem();
+		}
 		EndDrawing();
 		//----------------------------------------------------------------------------------
 	}
@@ -61,6 +76,64 @@ int main(void)
 	//--------------------------------------------------------------------------------------
 
 	return 0;
+}
+
+void DrawTilemap(int tilemapData[], size_t mapWidth, size_t mapHeight)
+{
+	for (size_t x = 0; x < mapWidth; x++)
+	{
+		for (size_t y = 0; y < mapHeight; y++)
+		{
+			if (tilemapData[x + y * mapWidth])
+				DrawRectangle((int)x * TILE_SIZE, (int)y * TILE_SIZE, TILE_SIZE, TILE_SIZE, RED);
+			else
+				DrawRectangleLines((int)x * TILE_SIZE, (int)y * TILE_SIZE, TILE_SIZE, TILE_SIZE, RED);
+		}
+	}
+}
+
+void LoadTilemap(const char *fileName, int tilemapData[], size_t length)
+{
+	char *data = LoadFileText(fileName);
+	char *dataPtr = data;
+	int intLength;
+	for (size_t i = 0; i < length; i++)
+	{
+		int num = GetNextInteger(dataPtr, &intLength);
+		tilemapData[i] = num;
+		dataPtr += intLength + 1;
+	}
+	// Free the data
+	UnloadFileText(data);
+}
+
+void SaveTilemap(const char *fileName, int tilemapData[], size_t length)
+{
+	char data[length * 2 + 1];
+	int pos = 0;
+	char buffer[3];
+	for (size_t i = 0; i < length; i++)
+	{
+		TextAppend(data, itoa(tilemapData[i], buffer, 10), &pos);
+		TextAppend(data, ",", &pos);
+	}
+	data[length] = '\0';
+	SaveFileText(fileName, data);
+}
+
+int GetNextInteger(const char *str, int *intLength)
+{
+	int number = -1;
+	*intLength = 0;
+	while (isdigit(*str))
+	{
+		(*intLength)++;
+		if (number < 0)
+			number = 0;
+		number += number * 10 + *str - '0';
+		str++;
+	}
+	return number;
 }
 
 void DirectionalInputSystem()

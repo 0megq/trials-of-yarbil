@@ -3,6 +3,9 @@
 
 #define NULL_ENTITY_ID -1
 #define MAX_ENTITIES 100
+#define TILEMAP_MAX_WIDTH 100
+#define TILEMAP_MAX_HEIGHT 100
+#define TILE_SIZE 16
 
 enum ShapeType
 {
@@ -77,6 +80,7 @@ typedef struct EntityComponentList
 	int idBufferSize;
 } EntityComponentList;
 
+void DrawTilemap(int tilemapData[], size_t mapWidth, size_t mapHeight);
 void DirectionalInputSystem();
 void DrawSpritesSystem();
 void PlayerInputSystem();
@@ -85,3 +89,6 @@ void InitializeEntityComponentList();
 int NewEntity();
 int NewPlayer();
 void FreeEntity(int entityId);
+void LoadTilemap(const char *fileName, int tilemapData[], size_t length);
+void SaveTilemap(const char *fileName, int tilemapData[], size_t length);
+int GetNextInteger(const char *str, int *pos);
