@@ -1,11 +1,13 @@
 #pragma once
 #include "raylib.h"
+#include <stddef.h>
 
 #define NULL_ENTITY_ID -1
 #define MAX_ENTITIES 100
 #define TILEMAP_MAX_WIDTH 100
 #define TILEMAP_MAX_HEIGHT 100
 #define TILE_SIZE 16
+#define MAX_TILE_TYPES 50
 
 enum Element
 {
@@ -26,6 +28,22 @@ union Shape
 {
 	Vector2 size;
 	float radius;
+};
+
+// Stores information for how to render the tile components in an entity component list
+struct Tileset
+{
+	int emptyTileId;
+	Vector2 tileSize;
+	Texture2D tiles[MAX_TILE_TYPES];
+};
+
+// Tile component
+struct Tile
+{
+	int entityId;
+	Vector2 tilePos;
+	int tileId;
 };
 
 // Position Component
@@ -82,6 +100,7 @@ typedef struct EntityComponentList
 	struct DirectionalInput directionalInputComponent;
 
 	// Components
+	struct Tile tileComponents[MAX_ENTITIES];
 	struct Collider colliderComponents[MAX_ENTITIES];
 	struct Position positionComponents[MAX_ENTITIES];
 	struct Velocity velocityComponents[MAX_ENTITIES];
@@ -93,9 +112,10 @@ typedef struct EntityComponentList
 	int totalActiveEntities;
 	int idBuffer[MAX_ENTITIES];
 	int idBufferSize;
+	struct Tileset tileset;
 } EntityComponentList;
 
-void DrawTilemap(int tilemapData[], size_t mapWidth, size_t mapHeight);
+// void DrawTilemap(int tilemapData[], size_t mapWidth, size_t mapHeight);
 void DirectionalInputSystem();
 void DrawSpritesSystem();
 void PlayerInputSystem();
@@ -104,6 +124,11 @@ void InitializeEntityComponentList();
 int NewEntity();
 int NewPlayer();
 void FreeEntity(int entityId);
-void LoadTilemap(const char *fileName, int tilemapData[], size_t length);
-void SaveTilemap(const char *fileName, int tilemapData[], size_t length);
-int GetNextInteger(const char *str, int *pos);
+// void LoadTilemap(const char *fileName, int tilemapData[], size_t length);
+// void SaveTilemap(const char *fileName, int tilemapData[], size_t length);
+// int GetNextInteger(const char *str, int *pos);
+int SetTile(Vector2 tilePos, int tileId);
+void RemoveTile(Vector2 tilePos);
+int GetTileEntity(Vector2 tilePos);
+int GetTileId(Vector2 tilePos);
+struct Tile *GetTile(Vector2 tilePos);

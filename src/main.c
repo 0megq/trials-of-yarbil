@@ -24,23 +24,28 @@ int main(void)
 	//--------------------------------------------------------------------------------------
 
 	// Setup tilemap. Tilemap data is stored in a 1D array
-	const int emptyTile = 0;
-	const int wallTile = 1;
-	int tilemapData[TILEMAP_MAX_WIDTH * TILEMAP_MAX_HEIGHT];
-	for (size_t i = 0; i < sizeof(tilemapData) / sizeof(tilemapData[0]); i++)
-	{
-		tilemapData[i] = emptyTile;
-	}
+	// const int emptyTile = 0;
+	// const int wallTile = 1;
+	// int tilemapData[TILEMAP_MAX_WIDTH * TILEMAP_MAX_HEIGHT];
+	// for (size_t i = 0; i < sizeof(tilemapData) / sizeof(tilemapData[0]); i++)
+	// {
+	// 	tilemapData[i] = emptyTile;
+	// }
 
-	tilemapData[1] = wallTile;
-	tilemapData[4] = wallTile;
+	// tilemapData[1] = wallTile;
+	// tilemapData[4] = wallTile;
 
 	InitializeEntityComponentList();
 
 	int playerId = NewPlayer();
-	SaveTilemap("map/map01.txt", tilemapData, sizeof(tilemapData) / sizeof(tilemapData[0]));
+	// SaveTilemap("map/map01.txt", tilemapData, sizeof(tilemapData) / sizeof(tilemapData[0]));
 
 	components.spriteComponents[playerId].tex = LoadTexture("assets/testsprite.png");
+
+	components.tileset.tileSize.x = TILE_SIZE;
+	components.tileset.tileSize.y = TILE_SIZE;
+	components.tileset.emptyTileId = 0;
+	components.tileset.tiles[1] = LoadTexture("assets/testtile.png");
 
 	// Main game loop
 	while (!WindowShouldClose()) // Detect window close button or ESC key
@@ -62,8 +67,7 @@ int main(void)
 		{
 			ClearBackground(RAYWHITE);
 
-			DrawTilemap(tilemapData, TILEMAP_MAX_WIDTH, TILEMAP_MAX_HEIGHT);
-
+			// DrawTilemap(tilemapData, TILEMAP_MAX_WIDTH, TILEMAP_MAX_HEIGHT);
 			DrawSpritesSystem();
 		}
 		EndDrawing();
@@ -78,62 +82,141 @@ int main(void)
 	return 0;
 }
 
-void DrawTilemap(int tilemapData[], size_t mapWidth, size_t mapHeight)
+// Returns the entity id of the set tile
+int SetTile(Vector2 tilePos, int tileId)
 {
-	for (size_t x = 0; x < mapWidth; x++)
+	int entityId;
+	if ((entityId = GetTileEntity(tilePos)) != NULL_ENTITY_ID)
 	{
-		for (size_t y = 0; y < mapHeight; y++)
+		components.tileComponents[entityId].tileId = tileId;
+		return entityId;
+	}
+
+	entityId = NewEntity();
+	components.tileComponents[entityId].entityId = entityId;
+	components.tileComponents[entityId].tilePos = tilePos;
+	components.tileComponents[entityId].tileId = tileId;
+	return entityId;
+}
+
+// Frees the entity with a tile component that has the given tile pos
+void FreeTile(Vector2 tilePos)
+{
+	struct Tile *tile = GetTile(tilePos);
+	if (tile)
+		FreeEntity(tile->entityId);
+}
+
+// Returns the entity id at tile pos. If there is no tile component returns NULL_ENTITY_ID
+int GetTileEntity(Vector2 tilePos)
+{
+	struct Tile *tile = GetTile(tilePos);
+	return tile ? tile->entityId : NULL_ENTITY_ID;
+}
+
+// Returns the tile id at tile pos. Returns tileset.emptyTileId if there is no tile component
+int GetTileId(Vector2 tilePos)
+{
+	struct Tile *tile = GetTile(tilePos);
+	return tile ? tile->tileId : components.tileset.emptyTileId;
+}
+
+// Returns a pointer to the Tile component at the given tilePos. returns NULL if there is no tile component
+struct Tile *GetTile(Vector2 tilePos)
+{
+	for (int i = 0, j = 0; j < components.totalActiveEntities && i < MAX_ENTITIES; i++)
+	{
+		// If the entity is not active then skip to the next iteration
+		if (!components.entityIsActive[i])
+			continue;
+
+		if (components.tileComponents[i].entityId == i && Vector2Equals(components.tileComponents[i].tilePos, tilePos))
+			return &components.tileComponents[i];
+
+		j++;
+	}
+	return NULL;
+}
+
+// void DrawTilemap(int tilemapData[], size_t mapWidth, size_t mapHeight)
+// {
+// 	for (size_t x = 0; x < mapWidth; x++)
+// 	{
+// 		for (size_t y = 0; y < mapHeight; y++)
+// 		{
+// 			if (tilemapData[x + y * mapWidth])
+// 				DrawRectangle((int)x * TILE_SIZE, (int)y * TILE_SIZE, TILE_SIZE, TILE_SIZE, RED);
+// 			else
+// 				DrawRectangleLines((int)x * TILE_SIZE, (int)y * TILE_SIZE, TILE_SIZE, TILE_SIZE, RED);
+// 		}
+// 	}
+// }
+
+// void LoadTilemap(const char *fileName, int tilemapData[], size_t length)
+// {
+// 	char *data = LoadFileText(fileName);
+// 	char *dataPtr = data;
+// 	int intLength;
+// 	for (size_t i = 0; i < length; i++)
+// 	{
+// 		int num = GetNextInteger(dataPtr, &intLength);
+// 		tilemapData[i] = num;
+// 		dataPtr += intLength + 1;
+// 	}
+// 	// Free the data
+// 	UnloadFileText(data);
+// }
+
+// void SaveTilemap(const char *fileName, int tilemapData[], size_t length)
+// {
+// 	char data[length * 2 + 1];
+// 	int pos = 0;
+// 	char buffer[3];
+// 	for (size_t i = 0; i < length; i++)
+// 	{
+// 		TextAppend(data, itoa(tilemapData[i], buffer, 10), &pos);
+// 		TextAppend(data, ",", &pos);
+// 	}
+// 	data[length] = '\0';
+// 	SaveFileText(fileName, data);
+// }
+
+// int GetNextInteger(const char *str, int *intLength)
+// {
+// 	int number = -1;
+// 	*intLength = 0;
+// 	while (isdigit(*str))
+// 	{
+// 		(*intLength)++;
+// 		if (number < 0)
+// 			number = 0;
+// 		number += number * 10 + *str - '0';
+// 		str++;
+// 	}
+// 	return number;
+// }
+
+void DrawTilesSystem()
+{
+	for (int i = 0, j = 0; j < components.totalActiveEntities && i < MAX_ENTITIES; i++)
+	{
+		// If the entity is not active then skip to the next iteration
+		if (!components.entityIsActive[i])
+			continue;
+
+		if (components.tileComponents[i].entityId == i)
 		{
-			if (tilemapData[x + y * mapWidth])
-				DrawRectangle((int)x * TILE_SIZE, (int)y * TILE_SIZE, TILE_SIZE, TILE_SIZE, RED);
+			Vector2 tilePos = components.tileComponents[i].tilePos;
+			Vector2 tileSize = components.tileset.tileSize;
+			Texture2D tex = components.tileset.tiles[components.tileComponents[i].tileId];
+			if (IsTextureReady(tex))
+				DrawTextureV(tex, Vector2Multiply(tilePos, tileSize), WHITE);
 			else
-				DrawRectangleLines((int)x * TILE_SIZE, (int)y * TILE_SIZE, TILE_SIZE, TILE_SIZE, RED);
+				DrawRectangleLines((int)(tilePos.x * tileSize.x), (int)(tilePos.y * tileSize.y), (int)tileSize.x, (int)tileSize.y, BLACK);
 		}
-	}
-}
 
-void LoadTilemap(const char *fileName, int tilemapData[], size_t length)
-{
-	char *data = LoadFileText(fileName);
-	char *dataPtr = data;
-	int intLength;
-	for (size_t i = 0; i < length; i++)
-	{
-		int num = GetNextInteger(dataPtr, &intLength);
-		tilemapData[i] = num;
-		dataPtr += intLength + 1;
+		j++;
 	}
-	// Free the data
-	UnloadFileText(data);
-}
-
-void SaveTilemap(const char *fileName, int tilemapData[], size_t length)
-{
-	char data[length * 2 + 1];
-	int pos = 0;
-	char buffer[3];
-	for (size_t i = 0; i < length; i++)
-	{
-		TextAppend(data, itoa(tilemapData[i], buffer, 10), &pos);
-		TextAppend(data, ",", &pos);
-	}
-	data[length] = '\0';
-	SaveFileText(fileName, data);
-}
-
-int GetNextInteger(const char *str, int *intLength)
-{
-	int number = -1;
-	*intLength = 0;
-	while (isdigit(*str))
-	{
-		(*intLength)++;
-		if (number < 0)
-			number = 0;
-		number += number * 10 + *str - '0';
-		str++;
-	}
-	return number;
 }
 
 void DirectionalInputSystem()
@@ -161,7 +244,9 @@ void DrawSpritesSystem()
 			continue;
 
 		if (components.positionComponents[i].entityId == i && components.spriteComponents[i].entityId == i)
+		{
 			DrawTextureV(components.spriteComponents[i].tex, components.positionComponents[i].pos, WHITE);
+		}
 
 		j++;
 	}
@@ -220,8 +305,10 @@ void InitializeEntityComponentList()
 	for (int i = 0; i < MAX_ENTITIES; i++)
 	{
 		components.colliderComponents[i].entityId = NULL_ENTITY_ID;
+		components.tileComponents[i].entityId = NULL_ENTITY_ID;
 		components.positionComponents[i].entityId = NULL_ENTITY_ID;
 		components.velocityComponents[i].entityId = NULL_ENTITY_ID;
+		components.spriteComponents[i].entityId = NULL_ENTITY_ID;
 		components.flagsComponents[i].entityId = NULL_ENTITY_ID;
 	}
 
@@ -255,6 +342,7 @@ int NewPlayer()
 
 	components.positionComponents[playerId].entityId = playerId;
 	components.velocityComponents[playerId].entityId = playerId;
+	components.spriteComponents[playerId].entityId = playerId;
 	components.flagsComponents[playerId].receiveDirectionalInput = true;
 
 	return playerId;
@@ -263,13 +351,15 @@ int NewPlayer()
 // Frees the entity at the given
 void FreeEntity(int entityId)
 {
-	// If the entity is not active then we don't need to free it again
-	if (!components.entityIsActive[entityId])
+	// If the entityId is the NULL_ENTITY_ID or if the entity is not active then we don't need to free it
+	if (entityId == NULL_ENTITY_ID || !components.entityIsActive[entityId])
 		return;
 	// Set the entityId of all the components of this entity to null entity id
 	components.colliderComponents[entityId].entityId = NULL_ENTITY_ID;
+	components.tileComponents[entityId].entityId = NULL_ENTITY_ID;
 	components.positionComponents[entityId].entityId = NULL_ENTITY_ID;
 	components.velocityComponents[entityId].entityId = NULL_ENTITY_ID;
+	components.spriteComponents[entityId].entityId = NULL_ENTITY_ID;
 	components.flagsComponents[entityId].entityId = NULL_ENTITY_ID;
 
 	// Set the entity to not be active
