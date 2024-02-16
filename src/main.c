@@ -47,28 +47,28 @@ int main(void)
 	components.tileset.emptyTileId = 0;
 	components.tileset.tiles[1] = LoadTexture("assets/testtile.png");
 
+	SetTileRect((Rectangle){2, 2, 4, 1}, 1);
+	float x = 0;
 	// Main game loop
 	while (!WindowShouldClose()) // Detect window close button or ESC key
 	{
-
+		x += GetFrameTime();
 		DirectionalInputSystem();
 
 		PlayerInputSystem();
 
 		ApplyVelocitySystem(GetFrameTime());
 		// Update
-		//----------------------------------------------------------------------------------
-		// TODO: Update your variables here
-		//----------------------------------------------------------------------------------
-
+		SetTileRect((Rectangle){(int)x, 20, 3, 1}, 2);
+		SetTileRect((Rectangle){(int)x - 5, 20, 3, 1}, components.tileset.emptyTileId);
 		// Draw
 		//----------------------------------------------------------------------------------
 		BeginDrawing();
 		{
 			ClearBackground(RAYWHITE);
 
-			// DrawTilemap(tilemapData, TILEMAP_MAX_WIDTH, TILEMAP_MAX_HEIGHT);
 			DrawSpritesSystem();
+			DrawTilesSystem();
 		}
 		EndDrawing();
 		//----------------------------------------------------------------------------------
@@ -97,6 +97,17 @@ int SetTile(Vector2 tilePos, int tileId)
 	components.tileComponents[entityId].tilePos = tilePos;
 	components.tileComponents[entityId].tileId = tileId;
 	return entityId;
+}
+
+void SetTileRect(Rectangle rect, int tileId)
+{
+	for (float x = rect.x; x < rect.x + rect.width; x++)
+	{
+		for (float y = rect.y; y < rect.y + rect.height; y++)
+		{
+			SetTile((Vector2){x, y}, tileId);
+		}
+	}
 }
 
 // Frees the entity with a tile component that has the given tile pos
@@ -138,48 +149,33 @@ struct Tile *GetTile(Vector2 tilePos)
 	return NULL;
 }
 
-// void DrawTilemap(int tilemapData[], size_t mapWidth, size_t mapHeight)
-// {
-// 	for (size_t x = 0; x < mapWidth; x++)
-// 	{
-// 		for (size_t y = 0; y < mapHeight; y++)
-// 		{
-// 			if (tilemapData[x + y * mapWidth])
-// 				DrawRectangle((int)x * TILE_SIZE, (int)y * TILE_SIZE, TILE_SIZE, TILE_SIZE, RED);
-// 			else
-// 				DrawRectangleLines((int)x * TILE_SIZE, (int)y * TILE_SIZE, TILE_SIZE, TILE_SIZE, RED);
-// 		}
-// 	}
-// }
+void LoadTilemap(const char *fileName)
+{
+	// Load data or text
+	// Free all entities with tile components
+	// Create all entities with tiles from data
+	// Unload data or text
+}
+void SaveTilemap(const char *fileName)
+{
+	// Create a byte array or string with each tile entity separated
+	char data[MAX_ENTITIES * (sizeof(struct EntityData))];
+	// How do I store an entity in text?
+	// Store components. If entity doesn't have component leave empty, to avoid storing unnecessary and extraneous data.
+	for (int i = 0, j = 0; j < components.totalActiveEntities && i < MAX_ENTITIES; i++)
+	{
+		// If the entity is not active then skip to the next iteration
+		if (!components.entityIsActive[i])
+			continue;
 
-// void LoadTilemap(const char *fileName, int tilemapData[], size_t length)
-// {
-// 	char *data = LoadFileText(fileName);
-// 	char *dataPtr = data;
-// 	int intLength;
-// 	for (size_t i = 0; i < length; i++)
-// 	{
-// 		int num = GetNextInteger(dataPtr, &intLength);
-// 		tilemapData[i] = num;
-// 		dataPtr += intLength + 1;
-// 	}
-// 	// Free the data
-// 	UnloadFileText(data);
-// }
+		if (components.tileComponents[i].entityId == i)
+		{
+		}
 
-// void SaveTilemap(const char *fileName, int tilemapData[], size_t length)
-// {
-// 	char data[length * 2 + 1];
-// 	int pos = 0;
-// 	char buffer[3];
-// 	for (size_t i = 0; i < length; i++)
-// 	{
-// 		TextAppend(data, itoa(tilemapData[i], buffer, 10), &pos);
-// 		TextAppend(data, ",", &pos);
-// 	}
-// 	data[length] = '\0';
-// 	SaveFileText(fileName, data);
-// }
+		j++;
+	}
+	// Save that info
+}
 
 // int GetNextInteger(const char *str, int *intLength)
 // {
@@ -204,14 +200,14 @@ void DrawTilesSystem()
 		if (!components.entityIsActive[i])
 			continue;
 
-		if (components.tileComponents[i].entityId == i)
+		if (components.tileComponents[i].entityId == i && components.tileComponents[i].tileId != components.tileset.emptyTileId)
 		{
 			Vector2 tilePos = components.tileComponents[i].tilePos;
 			Vector2 tileSize = components.tileset.tileSize;
 			Texture2D tex = components.tileset.tiles[components.tileComponents[i].tileId];
 			if (IsTextureReady(tex))
 				DrawTextureV(tex, Vector2Multiply(tilePos, tileSize), WHITE);
-			else
+			else // If the texture of the tile is not ready then display a placeholder
 				DrawRectangleLines((int)(tilePos.x * tileSize.x), (int)(tilePos.y * tileSize.y), (int)tileSize.x, (int)tileSize.y, BLACK);
 		}
 
@@ -329,16 +325,48 @@ int NewEntity()
 	components.totalActiveEntities++;
 	// Set the entity with entityId to be active
 	components.entityIsActive[entityId] = true;
-	// Give the entity a flags component
+	// Give the entity a flags component with default values
 	components.flagsComponents[entityId].entityId = entityId;
 	components.flagsComponents[entityId].receiveDirectionalInput = false;
 
 	return entityId;
 }
 
+int NewEntityFromData(struct EntityData *data)
+{
+	int entityId = NewEntity();
+
+	if (data->tileComponent.entityId != NULL_ENTITY_ID)			   // Check to see if the entity has the component
+	{															   // by seeing if the entity id of the component is null or not
+		components.tileComponents[entityId] = data->tileComponent; // Copy the info from the component
+		components.tileComponents[entityId].entityId = entityId;   // Set the entity id to the proper id
+	}
+	if (data->colliderComponent.entityId != NULL_ENTITY_ID)
+	{
+		components.colliderComponents[entityId] = data->colliderComponent; // Copy the info from the component
+		components.colliderComponents[entityId].entityId = entityId;	   // Set the entity id to the proper id
+	}
+	if (data->positionComponent.entityId != NULL_ENTITY_ID)
+	{
+		components.positionComponents[entityId] = data->positionComponent; // Copy the info from the component
+		components.positionComponents[entityId].entityId = entityId;	   // Set the entity id to the proper id
+	}
+	if (data->spriteComponent.entityId != NULL_ENTITY_ID)
+	{
+		components.spriteComponents[entityId] = data->spriteComponent; // Copy the info from the component
+		components.spriteComponents[entityId].entityId = entityId;	   // Set the entity id to the proper id
+	}
+	if (data->flagsComponent.entityId != NULL_ENTITY_ID)
+	{
+		components.flagsComponents[entityId] = data->flagsComponent; // Copy the info from the component
+		components.flagsComponents[entityId].entityId = entityId;	 // Set the entity id to the proper id
+	}
+	return entityId;
+}
+
 int NewPlayer()
 {
-	int playerId = NewEntity(components);
+	int playerId = NewEntity();
 
 	components.positionComponents[playerId].entityId = playerId;
 	components.velocityComponents[playerId].entityId = playerId;

@@ -94,6 +94,17 @@ struct Flags
 	unsigned receiveDirectionalInput : 1;
 };
 
+// Used for saving and loading data about a certain entity. This should include all components in the game
+struct EntityData
+{
+	struct Tile tileComponent;
+	struct Collider colliderComponent;
+	struct Position positionComponent;
+	struct Velocity velocityComponent;
+	struct Sprite spriteComponent;
+	struct Flags flagsComponent;
+};
+
 typedef struct EntityComponentList
 {
 	// Single Components i.e. components that are universal across entities like input
@@ -115,14 +126,15 @@ typedef struct EntityComponentList
 	struct Tileset tileset;
 } EntityComponentList;
 
-// void DrawTilemap(int tilemapData[], size_t mapWidth, size_t mapHeight);
-void DirectionalInputSystem();
-void DrawSpritesSystem();
-void PlayerInputSystem();
+void DirectionalInputSystem(void);
+void AttackInputSystem(void);
+void DrawSpritesSystem(void);
+void PlayerInputSystem(void);
 void ApplyVelocitySystem(float delta);
-void InitializeEntityComponentList();
-int NewEntity();
-int NewPlayer();
+void InitializeEntityComponentList(void);
+int NewEntity(void);
+int NewEntityFromData(struct EntityData *data);
+int NewPlayer(void);
 void FreeEntity(int entityId);
 // void LoadTilemap(const char *fileName, int tilemapData[], size_t length);
 // void SaveTilemap(const char *fileName, int tilemapData[], size_t length);
@@ -132,3 +144,5 @@ void RemoveTile(Vector2 tilePos);
 int GetTileEntity(Vector2 tilePos);
 int GetTileId(Vector2 tilePos);
 struct Tile *GetTile(Vector2 tilePos);
+void SetTileRect(Rectangle rect, int tileId);
+void DrawTilesSystem(void);
