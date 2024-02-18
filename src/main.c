@@ -20,6 +20,14 @@ int main(void)
 
 	InitWindow(screenWidth, screenHeight, "Trials of Yarbil");
 
+	RenderTexture2D virtualScreen = LoadRenderTexture(virtualScreenWidth, virtualScreenHeight);
+
+	// The target's height is flipped (in the source Rectangle), due to OpenGL reasons
+	Rectangle sourceRec = {0.0f, 0.0f, (float)virtualScreen.texture.width, -(float)virtualScreen.texture.height};
+	Rectangle destRec = {-virtualRatio, -virtualRatio, (float)screenWidth + (virtualRatio * 2), (float)screenHeight + (virtualRatio * 2)};
+
+	Vector2 origin = {0.0f, 0.0f};
+
 	SetTargetFPS(60); // Set our game to run at 60 frames-per-second
 	//--------------------------------------------------------------------------------------
 
@@ -63,12 +71,19 @@ int main(void)
 		SetTileRect((Rectangle){(int)x - 5, 20, 3, 1}, components.tileset.emptyTileId);
 		// Draw
 		//----------------------------------------------------------------------------------
-		BeginDrawing();
+		BeginTextureMode(virtualScreen);
 		{
 			ClearBackground(RAYWHITE);
 
 			DrawSpritesSystem();
 			DrawTilesSystem();
+		}
+		EndTextureMode();
+
+		BeginDrawing();
+		{
+			ClearBackground(RAYWHITE);
+			DrawTexturePro(virtualScreen.texture, sourceRec, destRec, origin, 0.0f, WHITE);
 		}
 		EndDrawing();
 		//----------------------------------------------------------------------------------
