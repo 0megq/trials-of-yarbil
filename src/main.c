@@ -15,8 +15,14 @@ int main(void)
 {
 	// Initialization
 	//--------------------------------------------------------------------------------------
-	const int screenWidth = 640;
-	const int screenHeight = 360;
+
+	const int screenWidth = 960;
+	const int screenHeight = 540;
+
+	const int virtualScreenWidth = 320;
+	const int virtualScreenHeight = 180;
+
+	const float virtualRatio = (float)screenWidth / (float)virtualScreenWidth;
 
 	InitWindow(screenWidth, screenHeight, "Trials of Yarbil");
 
