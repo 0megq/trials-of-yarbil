@@ -4,6 +4,7 @@
 #include <stddef.h>
 #include <ctype.h>
 #include <stdlib.h>
+#include <strings.h>
 
 EntityComponentList components;
 const float playerSpeed = 100;
@@ -15,7 +16,6 @@ int main(void)
 {
 	// Initialization
 	//--------------------------------------------------------------------------------------
-
 	const int screenWidth = 960;
 	const int screenHeight = 540;
 
@@ -35,34 +35,29 @@ int main(void)
 	Vector2 origin = {0.0f, 0.0f};
 
 	SetTargetFPS(60); // Set our game to run at 60 frames-per-second
+
 	//--------------------------------------------------------------------------------------
-
-	// Setup tilemap. Tilemap data is stored in a 1D array
-	// const int emptyTile = 0;
-	// const int wallTile = 1;
-	// int tilemapData[TILEMAP_MAX_WIDTH * TILEMAP_MAX_HEIGHT];
-	// for (size_t i = 0; i < sizeof(tilemapData) / sizeof(tilemapData[0]); i++)
-	// {
-	// 	tilemapData[i] = emptyTile;
-	// }
-
-	// tilemapData[1] = wallTile;
-	// tilemapData[4] = wallTile;
 
 	InitializeEntityComponentList();
 
+	// New player with player sprite
 	int playerId = NewPlayer();
-	// SaveTilemap("map/map01.txt", tilemapData, sizeof(tilemapData) / sizeof(tilemapData[0]));
-
 	components.spriteComponents[playerId].tex = LoadTexture("assets/testsprite.png");
 
+	// Setup tileset
 	components.tileset.tileSize.x = TILE_SIZE;
 	components.tileset.tileSize.y = TILE_SIZE;
 	components.tileset.emptyTileId = 0;
 	components.tileset.tiles[1] = LoadTexture("assets/testtile.png");
 
+	// Tile saving test
 	SetTileRect((Rectangle){2, 2, 4, 1}, 1);
+	SetTile((Vector2){3, 4}, 2);
+
+	SaveTilemap("map/map.toy");
+
 	float x = 0;
+
 	// Main game loop
 	while (!WindowShouldClose()) // Detect window close button or ESC key
 	{
@@ -73,8 +68,8 @@ int main(void)
 
 		ApplyVelocitySystem(GetFrameTime());
 		// Update
-		SetTileRect((Rectangle){(int)x, 20, 3, 1}, 2);
-		SetTileRect((Rectangle){(int)x - 5, 20, 3, 1}, components.tileset.emptyTileId);
+		// SetTileRect((Rectangle){floorf(x), 5, 3, 1}, 2);
+		// SetTileRect((Rectangle){floorf(x - 5), 5, 3, 1}, components.tileset.emptyTileId);
 		// Draw
 		//----------------------------------------------------------------------------------
 		BeginTextureMode(virtualScreen);
@@ -173,16 +168,30 @@ struct Tile *GetTile(Vector2 tilePos)
 void LoadTilemap(const char *fileName)
 {
 	// Load data or text
+	int dataSize;
+	unsigned char *rawData = LoadFileData(fileName, &dataSize);
+	size_t tileEntityCount = (size_t)dataSize / sizeof(struct EntityData);
+	struct EntityData data[tileEntityCount];
+	memcpy(data, rawData, dataSize < MAX_ENTITIES ? (size_t)dataSize : MAX_ENTITIES);
 	// Free all entities with tile components
+	FreeTiles();
 	// Create all entities with tiles from data
+	for (size_t i = 0; i < tileEntityCount; i++)
+	{
+		NewEntityFromData(&data[i]);
+	}
 	// Unload data or text
+	UnloadFileData(rawData);
 }
+
 void SaveTilemap(const char *fileName)
 {
-	// Create a byte array or string with each tile entity separated
-	char data[MAX_ENTITIES * (sizeof(struct EntityData))];
+	// Create an array with all the entity data
+	struct EntityData data[MAX_ENTITIES];
+	size_t tileCount = 0;
+
 	// How do I store an entity in text?
-	// Store components. If entity doesn't have component leave empty, to avoid storing unnecessary and extraneous data.
+	// Store components. TODO: If entity doesn't have component leave empty, to avoid storing unnecessary and extraneous data.
 	for (int i = 0, j = 0; j < components.totalActiveEntities && i < MAX_ENTITIES; i++)
 	{
 		// If the entity is not active then skip to the next iteration
@@ -190,28 +199,41 @@ void SaveTilemap(const char *fileName)
 			continue;
 
 		if (components.tileComponents[i].entityId == i)
-		{
-		}
+			data[tileCount++] = GetEntityData(i);
 
 		j++;
 	}
+
 	// Save that info
+	SaveFileData(fileName, data, (int)(tileCount * sizeof(struct EntityData)));
 }
 
-// int GetNextInteger(const char *str, int *intLength)
-// {
-// 	int number = -1;
-// 	*intLength = 0;
-// 	while (isdigit(*str))
-// 	{
-// 		(*intLength)++;
-// 		if (number < 0)
-// 			number = 0;
-// 		number += number * 10 + *str - '0';
-// 		str++;
-// 	}
-// 	return number;
-// }
+void FreeTiles(void)
+{
+	for (int i = 0, j = 0; j < components.totalActiveEntities && i < MAX_ENTITIES; i++)
+	{
+		// If the entity is not active then skip to the next iteration
+		if (!components.entityIsActive[i])
+			continue;
+
+		if (components.tileComponents[i].entityId == i)
+			FreeEntity(i);
+
+		j++;
+	}
+}
+
+struct EntityData GetEntityData(int entityId)
+{
+	struct EntityData data;
+	data.tileComponent = components.tileComponents[entityId];
+	data.positionComponent = components.positionComponents[entityId];
+	data.colliderComponent = components.colliderComponents[entityId];
+	data.spriteComponent = components.spriteComponents[entityId];
+	data.velocityComponent = components.velocityComponents[entityId];
+	data.flagsComponent = components.flagsComponents[entityId];
+	return data;
+}
 
 void DrawTilesSystem()
 {
@@ -262,7 +284,10 @@ void DrawSpritesSystem()
 
 		if (components.positionComponents[i].entityId == i && components.spriteComponents[i].entityId == i)
 		{
-			DrawTextureV(components.spriteComponents[i].tex, components.positionComponents[i].pos, WHITE);
+			if (IsTextureReady(components.spriteComponents[i].tex))
+				DrawTextureV(components.spriteComponents[i].tex, components.positionComponents[i].pos, WHITE);
+			else
+				DrawCircleV(components.positionComponents[i].pos, 10, RED); // Draw a red circle in place of the invalid texture
 		}
 
 		j++;
@@ -341,7 +366,11 @@ int NewEntity()
 	// and decrease the buffer size,
 	// otherwise use the amount of total active entities
 	int entityId = components.idBufferSize > 0 ? components.idBuffer[components.idBufferSize--] : components.totalActiveEntities;
-
+	if (entityId >= MAX_ENTITIES) // Too many entities
+	{
+		TraceLog(LOG_FATAL, "Ran out of entity memory. Tried to create entity #%i out of %i total entities", entityId + 1, MAX_ENTITIES);
+		abort();
+	}
 	// Increase the total active entities whether or not we get the id from the buffer or not.
 	components.totalActiveEntities++;
 	// Set the entity with entityId to be active
