@@ -49,7 +49,7 @@ struct Collider
 {
 	int entityId;
 	enum ShapeType type;
-	union Shape *shape;
+	union Shape shape;
 };
 
 // Velocity Component

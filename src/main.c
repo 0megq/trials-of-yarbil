@@ -51,7 +51,7 @@ int main(void)
 	components.tileset.tiles[1] = LoadTexture("assets/testtile.png");
 
 	// Tile saving test
-	SetTileRect((Rectangle){2, 2, 4, 1}, 1);
+	// SetTileRect((Rectangle){2, 2, 4, 1}, 1);
 	SetTile((Vector2){3, 4}, 2);
 
 	SaveTilemap("map/map.toy");
