@@ -9,15 +9,6 @@
 #define TILE_SIZE 16
 #define MAX_TILE_TYPES 50
 
-enum Element
-{
-	ELEMENT_FIRE,
-	ELEMENT_WATER,
-	ELEMENT_EARTH,
-	ELEMENT_AIR,
-	ELEMENT_NONE,
-};
-
 enum ShapeType
 {
 	TYPE_CIRCLE,
@@ -78,7 +69,7 @@ struct Sprite
 // Player Component
 struct Player
 {
-	enum Element playerElement;
+	int entityId;
 };
 
 // There only needs to be one directional input component at a single time
