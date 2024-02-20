@@ -7,7 +7,7 @@ registerFileType((fileExt, filePath, fileData) => {
 registerParser(() => {
 	addStandardHeader();
 
-	showUnused = true;
+	showUnused = false;
 
 	i = 0;
 	while (!endOfFile()) { // 88 bytes per entity data struct
@@ -23,7 +23,7 @@ registerParser(() => {
 			addRow('Tile.tilePos.y', getFloatNumberValue());
 			read(4);
 			addRow('Tile.tileId', getSignedNumberValue());
-		}
+		} else read(12);
 
 		read(4);
 		colliderEntityId = getSignedNumberValue();
@@ -35,7 +35,7 @@ registerParser(() => {
 			addRow('Collider.shape.', getFloatNumberValue(), 'union of Vector2 size, float radius');
 			read(4)
 			addRow('Collider.shape.', getFloatNumberValue(), 'union of Vector2 size, float radius');
-		}
+		} else read(12);
 
 		read(4)
 		posEntityId = getSignedNumberValue();
@@ -45,18 +45,32 @@ registerParser(() => {
 			addRow('Position.pos.x', getFloatNumberValue());
 			read(4);
 			addRow('Position.pos.y', getFloatNumberValue());
-		}
+		} else read(8);
 
 		read(4)
 		velEntityId = getSignedNumberValue();
 		if (showUnused || velEntityId > -1) {
-			addRow('Velocity.entityId', posEntityId);
+			addRow('Velocity.entityId', velEntityId);
 			read(4);
 			addRow('Velocity.vel.x', getFloatNumberValue());
 			read(4);
 			addRow('Velocity.vel.y', getFloatNumberValue());
-		}
+		} else read(8);
 
+		read(4)
+		spriteEntityId = getSignedNumberValue();
+		if (showUnused || spriteEntityId > -1) {
+			addRow('Sprite.entityId', spriteEntityId);
+			read(4);
+			addRow('Sprite.texId', getNumberValue(), 'Enum to index into loadedTextures');
+		} else read(4);
 
+		read(4)
+		flagsEntityId = getSignedNumberValue();
+		if (showUnused || flagsEntityId > -1) {
+			addRow('Flags.entityId', flagsEntityId);
+			read(4);
+			addRow('Flags.bitFlags', getBitsValue());
+		} else read(4);
 	}
 })
