@@ -8,6 +8,13 @@
 #define TILEMAP_MAX_HEIGHT 100
 #define TILE_SIZE 16
 #define MAX_TILE_TYPES 50
+#define MAX_TEXTURES 50
+
+enum TextureId
+{
+	TEX_PLAYER,
+	TEX_TESTSPRITE,
+};
 
 enum ShapeType
 {
@@ -63,7 +70,7 @@ struct Velocity
 struct Sprite
 {
 	int entityId;
-	Texture2D tex;
+	enum TextureId texId;
 };
 
 // Player Component
@@ -138,3 +145,5 @@ struct Tile *GetTile(Vector2 tilePos);
 void SetTileRect(Rectangle rect, int tileId);
 void DrawTilesSystem(void);
 struct EntityData GetEntityData(int entityId);
+void UnloadTextures(void);
+void LoadTextures(void);

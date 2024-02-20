@@ -8,6 +8,7 @@
 
 EntityComponentList components;
 const float playerSpeed = 100;
+Texture2D loadedTextures[MAX_TEXTURES];
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -16,6 +17,9 @@ int main(void)
 {
 	// Initialization
 	//--------------------------------------------------------------------------------------
+
+	// TraceLog(LOG_INFO, "EntityData %llu, Tile: %llu, Collider: %llu, Pos: %llu, Vel: %llu, Sprite: %llu, Flags: %llu", sizeof(struct EntityData), sizeof(struct Tile), sizeof(struct Collider), sizeof(struct Position), sizeof(struct Velocity), sizeof(struct Sprite), sizeof(struct Flags));
+
 	const int screenWidth = 960;
 	const int screenHeight = 540;
 
@@ -34,15 +38,16 @@ int main(void)
 
 	Vector2 origin = {0.0f, 0.0f};
 
-	SetTargetFPS(60); // Set our game to run at 60 frames-per-second
+	LoadTextures();
 
+	SetTargetFPS(60); // Set our game to run at 60 frames-per-second
 	//--------------------------------------------------------------------------------------
 
 	InitializeEntityComponentList();
 
 	// New player with player sprite
 	int playerId = NewPlayer();
-	components.spriteComponents[playerId].tex = LoadTexture("assets/testsprite.png");
+	components.spriteComponents[playerId].texId = TEX_PLAYER;
 
 	// Setup tileset
 	components.tileset.tileSize.x = TILE_SIZE;
@@ -51,16 +56,25 @@ int main(void)
 	components.tileset.tiles[1] = LoadTexture("assets/testtile.png");
 
 	// Tile saving test
-	// SetTileRect((Rectangle){2, 2, 4, 1}, 1);
-	SetTile((Vector2){3, 4}, 2);
+	SetTileRect((Rectangle){2, 2, 4, 1}, 1);
+	int myTileId = SetTile((Vector2){3, 4}, 2);
 
-	SaveTilemap("map/map.toy");
+	components.positionComponents[myTileId].entityId = myTileId;
+	components.positionComponents[myTileId].pos = (Vector2){160, 90};
+	components.spriteComponents[myTileId].entityId = myTileId;
+	components.spriteComponents[myTileId].texId = TEX_TESTSPRITE;
 
 	float x = 0;
 
 	// Main game loop
 	while (!WindowShouldClose()) // Detect window close button or ESC key
 	{
+		if (IsKeyPressed(KEY_L))
+			LoadTilemap("map/map.toy");
+
+		if (IsKeyPressed(KEY_O))
+			SaveTilemap("map/map.toy");
+
 		x += GetFrameTime();
 		DirectionalInputSystem();
 
@@ -90,12 +104,26 @@ int main(void)
 		//----------------------------------------------------------------------------------
 	}
 
+	UnloadTextures();
 	// De-Initialization
 	//--------------------------------------------------------------------------------------
 	CloseWindow(); // Close window and OpenGL context
 	//--------------------------------------------------------------------------------------
 
 	return 0;
+}
+
+void LoadTextures(void)
+{
+	loadedTextures[TEX_PLAYER] = LoadTexture("assets/player.png");
+	loadedTextures[TEX_TESTSPRITE] = LoadTexture("assets/testsprite.png");
+}
+
+void UnloadTextures(void)
+{
+	for (size_t i = 0; i < MAX_TEXTURES; i++)
+		if (IsTextureReady(loadedTextures[i]))
+			UnloadTexture(loadedTextures[i]);
 }
 
 // Returns the entity id of the set tile
@@ -247,8 +275,8 @@ void DrawTilesSystem()
 		{
 			Vector2 tilePos = components.tileComponents[i].tilePos;
 			Vector2 tileSize = components.tileset.tileSize;
-			Texture2D tex = components.tileset.tiles[components.tileComponents[i].tileId];
-			if (IsTextureReady(tex))
+			Texture2D tex;
+			if (components.tileComponents[i].tileId < MAX_TILE_TYPES && IsTextureReady(tex = components.tileset.tiles[components.tileComponents[i].tileId]))
 				DrawTextureV(tex, Vector2Multiply(tilePos, tileSize), WHITE);
 			else // If the texture of the tile is not ready then display a placeholder
 				DrawRectangleLines((int)(tilePos.x * tileSize.x), (int)(tilePos.y * tileSize.y), (int)tileSize.x, (int)tileSize.y, BLACK);
@@ -258,7 +286,7 @@ void DrawTilesSystem()
 	}
 }
 
-void DirectionalInputSystem()
+void DirectionalInputSystem(void)
 {
 	Vector2 direction = Vector2Zero();
 	if (IsKeyDown(KEY_RIGHT))
@@ -274,7 +302,7 @@ void DirectionalInputSystem()
 }
 
 // This must be called after BeginDrawing() and before EndDrawing()
-void DrawSpritesSystem()
+void DrawSpritesSystem(void)
 {
 	for (int i = 0, j = 0; j < components.totalActiveEntities && i < MAX_ENTITIES; i++)
 	{
@@ -284,8 +312,8 @@ void DrawSpritesSystem()
 
 		if (components.positionComponents[i].entityId == i && components.spriteComponents[i].entityId == i)
 		{
-			if (IsTextureReady(components.spriteComponents[i].tex))
-				DrawTextureV(components.spriteComponents[i].tex, components.positionComponents[i].pos, WHITE);
+			if (components.spriteComponents[i].texId < MAX_TEXTURES && IsTextureReady(loadedTextures[components.spriteComponents[i].texId]))
+				DrawTextureV(loadedTextures[components.spriteComponents[i].texId], components.positionComponents[i].pos, WHITE);
 			else
 				DrawCircleV(components.positionComponents[i].pos, 10, RED); // Draw a red circle in place of the invalid texture
 		}
@@ -294,7 +322,7 @@ void DrawSpritesSystem()
 	}
 }
 
-void PlayerInputSystem()
+void PlayerInputSystem(void)
 {
 	Vector2 direction = components.directionalInputComponent.direction;
 	direction = Vector2Normalize(direction);
@@ -338,7 +366,7 @@ void ApplyVelocitySystem(float delta)
 	}
 }
 
-void InitializeEntityComponentList()
+void InitializeEntityComponentList(void)
 {
 	// Initialize Single Components
 	components.directionalInputComponent.direction = Vector2Zero();
@@ -360,7 +388,7 @@ void InitializeEntityComponentList()
 }
 
 // Creates a new entity in the given EntityComponentList components and returns the id of that entity in the list
-int NewEntity()
+int NewEntity(void)
 {
 	// Get the new entity's id. If the id buffer is larger than zero, then use the id at the top of the buffer stack
 	// and decrease the buffer size,
@@ -414,7 +442,7 @@ int NewEntityFromData(struct EntityData *data)
 	return entityId;
 }
 
-int NewPlayer()
+int NewPlayer(void)
 {
 	int playerId = NewEntity();
 
