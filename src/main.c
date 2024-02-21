@@ -64,18 +64,31 @@ int main(void)
 	components.spriteComponents[myTileId].entityId = myTileId;
 	components.spriteComponents[myTileId].texId = TEX_TESTSPRITE;
 
-	float x = 0;
+	// struct EntityData testData;
+
+	// testData.colliderComponent.entityId = -1;
+	// testData.positionComponent.entityId = 1;
+	// testData.positionComponent.pos = (Vector2){100, 0};
+	// testData.velocityComponent.entityId = 1;
+	// testData.spriteComponent.entityId = 1;
+	// testData.spriteComponent.texId = TEX_PLAYER;
+	// testData.tileComponent.entityId = -1;
+	// testData.flagsComponent.entityId = 1;
+	// testData.flagsComponent.receiveDirectionalInput = 1;
+	// NewEntityFromData(&testData);
+
+	// printf("before: %i ", components.totalActiveEntities);
+	// FreeTiles();
+	// printf("after: %i\n", components.totalActiveEntities);
 
 	// Main game loop
 	while (!WindowShouldClose()) // Detect window close button or ESC key
 	{
 		if (IsKeyPressed(KEY_L))
 			LoadTilemap("map/map.toy");
-
-		if (IsKeyPressed(KEY_O))
+		else if (IsKeyPressed(KEY_S))
 			SaveTilemap("map/map.toy");
 
-		x += GetFrameTime();
 		DirectionalInputSystem();
 
 		PlayerInputSystem();
@@ -145,9 +158,9 @@ int SetTile(Vector2 tilePos, int tileId)
 
 void SetTileRect(Rectangle rect, int tileId)
 {
-	for (float x = rect.x; x < rect.x + rect.width; x++)
+	for (float y = rect.y; y < rect.y + rect.height; y++)
 	{
-		for (float y = rect.y; y < rect.y + rect.height; y++)
+		for (float x = rect.x; x < rect.x + rect.width; x++)
 		{
 			SetTile((Vector2){x, y}, tileId);
 		}
@@ -200,7 +213,8 @@ void LoadTilemap(const char *fileName)
 	unsigned char *rawData = LoadFileData(fileName, &dataSize);
 	size_t tileEntityCount = (size_t)dataSize / sizeof(struct EntityData);
 	struct EntityData data[tileEntityCount];
-	memcpy(data, rawData, dataSize < MAX_ENTITIES ? (size_t)dataSize : MAX_ENTITIES);
+	size_t bytesToCopy = tileEntityCount * sizeof(struct EntityData);
+	memcpy(data, rawData, bytesToCopy);
 	// Free all entities with tile components
 	FreeTiles();
 	// Create all entities with tiles from data
@@ -245,8 +259,10 @@ void FreeTiles(void)
 			continue;
 
 		if (components.tileComponents[i].entityId == i)
+		{
 			FreeEntity(i);
-
+			j--; // go back down one because now there are less entities
+		}
 		j++;
 	}
 }
@@ -393,12 +409,19 @@ int NewEntity(void)
 	// Get the new entity's id. If the id buffer is larger than zero, then use the id at the top of the buffer stack
 	// and decrease the buffer size,
 	// otherwise use the amount of total active entities
-	int entityId = components.idBufferSize > 0 ? components.idBuffer[components.idBufferSize--] : components.totalActiveEntities;
+	int entityId = components.idBufferSize > 0 ? components.idBuffer[--components.idBufferSize] : components.totalActiveEntities;
 	if (entityId >= MAX_ENTITIES) // Too many entities
 	{
 		TraceLog(LOG_FATAL, "Ran out of entity memory. Tried to create entity #%i out of %i total entities", entityId + 1, MAX_ENTITIES);
 		abort();
 	}
+
+	components.tileComponents[entityId].entityId = -1;
+	components.positionComponents[entityId].entityId = -1;
+	components.colliderComponents[entityId].entityId = -1;
+	components.spriteComponents[entityId].entityId = -1;
+	components.velocityComponents[entityId].entityId = -1;
+
 	// Increase the total active entities whether or not we get the id from the buffer or not.
 	components.totalActiveEntities++;
 	// Set the entity with entityId to be active
@@ -423,6 +446,11 @@ int NewEntityFromData(struct EntityData *data)
 	{
 		components.colliderComponents[entityId] = data->colliderComponent; // Copy the info from the component
 		components.colliderComponents[entityId].entityId = entityId;	   // Set the entity id to the proper id
+	}
+	if (data->velocityComponent.entityId != NULL_ENTITY_ID)
+	{
+		components.velocityComponents[entityId] = data->velocityComponent; // Copy the info from the component
+		components.velocityComponents[entityId].entityId = entityId;	   // Set the entity id to the proper id
 	}
 	if (data->positionComponent.entityId != NULL_ENTITY_ID)
 	{
