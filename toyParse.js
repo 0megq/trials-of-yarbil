@@ -13,7 +13,7 @@ registerParser(() => {
 	while (!endOfFile()) { // 88 bytes per entity data struct
 		i++
 		read(4);
-		addRow('Entity', i);
+		addRow('Entity', i, 'Entity number. Starts counting from 1. Does not correlate with entityId');
 		tileEntityId = getSignedNumberValue();
 		if (showUnused || tileEntityId > -1) {
 			addRow('Tile.entityId', tileEntityId);
