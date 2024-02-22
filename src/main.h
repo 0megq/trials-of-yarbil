@@ -14,6 +14,7 @@ enum TextureId
 {
 	TEX_PLAYER,
 	TEX_TESTSPRITE,
+	TEX_SWORD,
 };
 
 enum ShapeType

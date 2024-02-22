@@ -130,6 +130,7 @@ void LoadTextures(void)
 {
 	loadedTextures[TEX_PLAYER] = LoadTexture("assets/player.png");
 	loadedTextures[TEX_TESTSPRITE] = LoadTexture("assets/testsprite.png");
+	loadedTextures[TEX_SWORD] = LoadTexture("assets/sword.png");
 }
 
 void UnloadTextures(void)
