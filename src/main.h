@@ -23,6 +23,14 @@ enum ShapeType
 	TYPE_RECTANGLE,
 };
 
+enum FaceFlag
+{
+	FACE_NONE,
+	FACE_X,
+	FACE_Y,
+	FACE_BOTH,
+};
+
 union Shape
 {
 	Vector2 size;
@@ -96,6 +104,7 @@ struct Flags
 {
 	int entityId;
 	unsigned receiveDirectionalInput : 1;
+	enum FaceFlag faceVel;
 };
 
 // Used for saving and loading data about a certain entity. This should include all components in the game
@@ -154,3 +163,4 @@ struct EntityData GetEntityData(int entityId);
 void UnloadTextures(void);
 void LoadTextures(void);
 void AddSpriteComponent(int entityId, enum TextureId texId);
+void SpriteFaceVelSystem(void);

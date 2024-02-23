@@ -96,6 +96,7 @@ int main(void)
 		PlayerInputSystem();
 
 		ApplyVelocitySystem(GetFrameTime());
+		SpriteFaceVelSystem();
 		// Update
 		// SetTileRect((Rectangle){floorf(x), 5, 3, 1}, 2);
 		// SetTileRect((Rectangle){floorf(x - 5), 5, 3, 1}, components.tileset.emptyTileId);
@@ -305,6 +306,39 @@ void DrawTilesSystem()
 	}
 }
 
+void SpriteFaceVelSystem(void)
+{
+	for (int i = 0, j = 0; j < components.totalActiveEntities && i < MAX_ENTITIES; i++)
+	{
+		// If the entity is not active then skip to the next iteration
+		if (!components.entityIsActive[i])
+			continue;
+
+		if (components.velocityComponents[i].entityId == i && components.spriteComponents[i].entityId == i)
+		{
+			if (components.flagsComponents[i].faceVel == FACE_BOTH)
+			{ // Set the scale to the abs of scale * direction of velocity
+				if (components.velocityComponents[i].vel.x != 0)
+					components.spriteComponents[i].scale.x = signf(components.velocityComponents[i].vel.x) * fabsf(components.spriteComponents[i].scale.x);
+				if (components.velocityComponents[i].vel.y != 0)
+					components.spriteComponents[i].scale.y = signf(components.velocityComponents[i].vel.y) * fabsf(components.spriteComponents[i].scale.y);
+			}
+			else if (components.flagsComponents[i].faceVel == FACE_X)
+			{ // Set the scale to the abs of scale * direction of velocity
+				if (components.velocityComponents[i].vel.x != 0)
+					components.spriteComponents[i].scale.x = signf(components.velocityComponents[i].vel.x) * fabsf(components.spriteComponents[i].scale.x);
+			}
+			else if (components.flagsComponents[i].faceVel == FACE_Y)
+			{ // Set the scale to the abs of scale * direction of velocity
+				if (components.velocityComponents[i].vel.y != 0)
+					components.spriteComponents[i].scale.y = signf(components.velocityComponents[i].vel.y) * fabsf(components.spriteComponents[i].scale.y);
+			}
+		}
+
+		j++;
+	}
+}
+
 void DirectionalInputSystem(void)
 {
 	Vector2 direction = Vector2Zero();
@@ -464,6 +498,7 @@ int NewEntity(void)
 	// Give the entity a flags component with default values
 	components.flagsComponents[entityId].entityId = entityId;
 	components.flagsComponents[entityId].receiveDirectionalInput = false;
+	components.flagsComponents[entityId].faceVel = FACE_NONE;
 
 	return entityId;
 }
@@ -513,6 +548,7 @@ int NewPlayer(void)
 	components.velocityComponents[playerId].entityId = playerId;
 	AddSpriteComponent(playerId, TEX_PLAYER);
 	components.flagsComponents[playerId].receiveDirectionalInput = true;
+	components.flagsComponents[playerId].faceVel = FACE_X;
 
 	return playerId;
 }
