@@ -67,11 +67,16 @@ struct Velocity
 	Vector2 vel;
 };
 
-// Texture Component
+// Sprite Component
 struct Sprite
 {
 	int entityId;
 	enum TextureId texId;
+	Rectangle texRegion; // part of the texture that is rendered
+	Vector2 scale;		 // scale of the sprite
+	Vector2 origin;		 // origin/center of the sprite
+	float rotation;		 // rotation in degress of the sprite
+	Color tint;			 // tint of the texture. WHITE will render the texture normally
 };
 
 // Player Component
@@ -148,3 +153,4 @@ void DrawTilesSystem(void);
 struct EntityData GetEntityData(int entityId);
 void UnloadTextures(void);
 void LoadTextures(void);
+void AddSpriteComponent(int entityId, enum TextureId texId);

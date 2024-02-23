@@ -4,7 +4,9 @@
 #include <stddef.h>
 #include <ctype.h>
 #include <stdlib.h>
+#include <math.h>
 #include <strings.h>
+#include "utils.h"
 
 EntityComponentList components;
 const float playerSpeed = 100;
@@ -47,7 +49,7 @@ int main(void)
 
 	// New player with player sprite
 	int playerId = NewPlayer();
-	components.spriteComponents[playerId].texId = TEX_PLAYER;
+	components.spriteComponents[playerId].scale = (Vector2){2, 2};
 
 	// Setup tileset
 	components.tileset.tileSize.x = TILE_SIZE;
@@ -329,14 +331,46 @@ void DrawSpritesSystem(void)
 
 		if (components.positionComponents[i].entityId == i && components.spriteComponents[i].entityId == i)
 		{
-			if (components.spriteComponents[i].texId < MAX_TEXTURES && IsTextureReady(loadedTextures[components.spriteComponents[i].texId]))
-				DrawTextureV(loadedTextures[components.spriteComponents[i].texId], components.positionComponents[i].pos, WHITE);
-			else
-				DrawCircleV(components.positionComponents[i].pos, 10, RED); // Draw a red circle in place of the invalid texture
-		}
+			struct Sprite sprite = components.spriteComponents[i];
 
-		j++;
+			if (sprite.texId < MAX_TEXTURES && IsTextureReady(loadedTextures[sprite.texId]))
+			{
+				Texture2D tex = loadedTextures[sprite.texId];
+				Vector2 pos = components.positionComponents[i].pos;
+				Rectangle dstRec = (Rectangle){
+					pos.x,
+					pos.y,
+					(float)tex.width * fabsf(sprite.scale.x), // scale the sprite. a negative would mess this up
+					(float)tex.height * fabsf(sprite.scale.y)};
+
+				Rectangle texRegion = sprite.texRegion;
+				Rectangle srcRec = (Rectangle){
+					texRegion.x,
+					texRegion.y,
+					texRegion.width * signf(sprite.scale.x), // Flip the texture, based off sprite scale
+					texRegion.height * signf(sprite.scale.y)};
+				DrawTexturePro(tex, srcRec, dstRec, sprite.origin, sprite.rotation, sprite.tint);
+			}
+			else
+			{
+				DrawCircleV(components.positionComponents[i].pos, 10, RED); // Draw a red circle in place of the invalid texture}
+			}
+
+			j++;
+		}
 	}
+}
+
+void AddSpriteComponent(int entityId, enum TextureId texId)
+{
+	components.spriteComponents[entityId].entityId = entityId;
+	components.spriteComponents[entityId].texId = texId;
+	components.spriteComponents[entityId].rotation = 0;
+	components.spriteComponents[entityId].scale = (Vector2){1, 1};
+	Texture2D tex = loadedTextures[texId];
+	components.spriteComponents[entityId].origin = (Vector2){(float)tex.width / 2, (float)tex.height / 2};	  // Set origin to center of texture
+	components.spriteComponents[entityId].texRegion = (Rectangle){0, 0, (float)tex.width, (float)tex.height}; // Set sprite to use entire texture
+	components.spriteComponents[entityId].tint = WHITE;
 }
 
 void PlayerInputSystem(void)
@@ -477,7 +511,7 @@ int NewPlayer(void)
 
 	components.positionComponents[playerId].entityId = playerId;
 	components.velocityComponents[playerId].entityId = playerId;
-	components.spriteComponents[playerId].entityId = playerId;
+	AddSpriteComponent(playerId, TEX_PLAYER);
 	components.flagsComponents[playerId].receiveDirectionalInput = true;
 
 	return playerId;

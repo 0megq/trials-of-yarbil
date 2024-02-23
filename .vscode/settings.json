@@ -16,7 +16,10 @@
 		"array": "c",
 		"string": "c",
 		"string_view": "c",
-		"utils.h": "c"
+		"utils.h": "c",
+		"stdlib.h": "c",
+		"math.h": "c",
+		"strings.h": "c"
 	},
 	"binary-file-viewer.parserFolders": [
 		"C:\\Users\\Nick\\Desktop\\CDev\\RaylibProjects\\trials-of-yarbil\\"
