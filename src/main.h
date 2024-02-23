@@ -82,7 +82,7 @@ struct Sprite
 	enum TextureId texId;
 	Rectangle texRegion; // part of the texture that is rendered
 	Vector2 scale;		 // scale of the sprite
-	Vector2 origin;		 // origin/center of the sprite
+	Vector2 texOrigin;	 // origin/center of the sprite
 	float rotation;		 // rotation in degress of the sprite
 	Color tint;			 // tint of the texture. WHITE will render the texture normally
 };

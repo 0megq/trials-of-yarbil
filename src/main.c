@@ -22,11 +22,11 @@ int main(void)
 
 	// TraceLog(LOG_INFO, "EntityData %llu, Tile: %llu, Collider: %llu, Pos: %llu, Vel: %llu, Sprite: %llu, Flags: %llu", sizeof(struct EntityData), sizeof(struct Tile), sizeof(struct Collider), sizeof(struct Position), sizeof(struct Velocity), sizeof(struct Sprite), sizeof(struct Flags));
 
-	const int screenWidth = 960;
-	const int screenHeight = 540;
+	const int screenWidth = 1280;
+	const int screenHeight = 720;
 
-	const int virtualScreenWidth = 320;
-	const int virtualScreenHeight = 180;
+	const int virtualScreenWidth = 640;
+	const int virtualScreenHeight = 360;
 
 	const float virtualRatio = (float)screenWidth / (float)virtualScreenWidth;
 
@@ -61,10 +61,9 @@ int main(void)
 	SetTileRect((Rectangle){2, 2, 4, 1}, 1);
 	int myTileId = SetTile((Vector2){3, 4}, 2);
 
-	components.positionComponents[myTileId].entityId = myTileId;
-	components.positionComponents[myTileId].pos = (Vector2){160, 90};
-	components.spriteComponents[myTileId].entityId = myTileId;
-	components.spriteComponents[myTileId].texId = TEX_TESTSPRITE;
+	// components.positionComponents[myTileId].entityId = myTileId;
+	// components.positionComponents[myTileId].pos = (Vector2){160, 90};
+	// AddSpriteComponent(myTileId, TEX_TESTSPRITE);
 
 	// struct EntityData testData;
 
@@ -90,6 +89,8 @@ int main(void)
 			LoadTilemap("map/map.toy");
 		else if (IsKeyPressed(KEY_S))
 			SaveTilemap("map/map.toy");
+
+		// components.spriteComponents[playerId].rotation += GetFrameTime() * 20;
 
 		DirectionalInputSystem();
 
@@ -283,7 +284,7 @@ struct EntityData GetEntityData(int entityId)
 	return data;
 }
 
-void DrawTilesSystem()
+void DrawTilesSystem(void)
 {
 	for (int i = 0, j = 0; j < components.totalActiveEntities && i < MAX_ENTITIES; i++)
 	{
@@ -383,7 +384,7 @@ void DrawSpritesSystem(void)
 					texRegion.y,
 					texRegion.width * signf(sprite.scale.x), // Flip the texture, based off sprite scale
 					texRegion.height * signf(sprite.scale.y)};
-				DrawTexturePro(tex, srcRec, dstRec, sprite.origin, sprite.rotation, sprite.tint);
+				DrawTexturePro(tex, srcRec, dstRec, Vector2Multiply(sprite.texOrigin, absv(sprite.scale)), sprite.rotation, sprite.tint);
 			}
 			else
 			{
@@ -402,7 +403,7 @@ void AddSpriteComponent(int entityId, enum TextureId texId)
 	components.spriteComponents[entityId].rotation = 0;
 	components.spriteComponents[entityId].scale = (Vector2){1, 1};
 	Texture2D tex = loadedTextures[texId];
-	components.spriteComponents[entityId].origin = (Vector2){(float)tex.width / 2, (float)tex.height / 2};	  // Set origin to center of texture
+	components.spriteComponents[entityId].texOrigin = (Vector2){(float)tex.width / 2, (float)tex.height / 2}; // Set origin to center of texture
 	components.spriteComponents[entityId].texRegion = (Rectangle){0, 0, (float)tex.width, (float)tex.height}; // Set sprite to use entire texture
 	components.spriteComponents[entityId].tint = WHITE;
 }
