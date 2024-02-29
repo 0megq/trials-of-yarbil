@@ -390,9 +390,9 @@ void DrawSpritesSystem(void)
 			{
 				DrawCircleV(components.positionComponents[i].pos, 10, RED); // Draw a red circle in place of the invalid texture}
 			}
-
-			j++;
 		}
+
+		j++;
 	}
 }
 
@@ -485,12 +485,6 @@ int NewEntity(void)
 		TraceLog(LOG_FATAL, "Ran out of entity memory. Tried to create entity #%i out of %i total entities", entityId + 1, MAX_ENTITIES);
 		abort();
 	}
-
-	components.tileComponents[entityId].entityId = -1;
-	components.positionComponents[entityId].entityId = -1;
-	components.colliderComponents[entityId].entityId = -1;
-	components.spriteComponents[entityId].entityId = -1;
-	components.velocityComponents[entityId].entityId = -1;
 
 	// Increase the total active entities whether or not we get the id from the buffer or not.
 	components.totalActiveEntities++;
