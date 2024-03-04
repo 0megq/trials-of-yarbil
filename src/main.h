@@ -93,10 +93,11 @@ struct Player
 	int entityId;
 };
 
-// There only needs to be one directional input component at a single time
-struct DirectionalInput
+// There only needs to be one input component at a single time
+struct Input
 {
 	Vector2 direction;
+	bool attack;
 };
 
 // Every entity will have a flags component
@@ -104,6 +105,7 @@ struct Flags
 {
 	int entityId;
 	unsigned receiveDirectionalInput : 1;
+	unsigned receiveAttackInput : 1;
 	enum FaceFlag faceVel;
 };
 
@@ -121,7 +123,7 @@ struct EntityData
 typedef struct EntityComponentList
 {
 	// Single Components i.e. components that are universal across entities like input
-	struct DirectionalInput directionalInputComponent;
+	struct Input inputComponent;
 
 	// Components
 	struct Tile tileComponents[MAX_ENTITIES];
@@ -139,10 +141,10 @@ typedef struct EntityComponentList
 	struct Tileset tileset;
 } EntityComponentList;
 
-void DirectionalInputSystem(void);
+void InputSystem(void);
 void AttackInputSystem(void);
 void DrawSpritesSystem(void);
-void PlayerInputSystem(void);
+void VelocityInputSystem(void);
 void ApplyVelocitySystem(float delta);
 void InitializeEntityComponentList(void);
 int NewEntity(void);

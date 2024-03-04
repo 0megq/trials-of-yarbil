@@ -92,9 +92,9 @@ int main(void)
 
 		// components.spriteComponents[playerId].rotation += GetFrameTime() * 20;
 
-		DirectionalInputSystem();
+		InputSystem();
 
-		PlayerInputSystem();
+		VelocityInputSystem();
 
 		ApplyVelocitySystem(GetFrameTime());
 		SpriteFaceVelSystem();
@@ -340,7 +340,7 @@ void SpriteFaceVelSystem(void)
 	}
 }
 
-void DirectionalInputSystem(void)
+void InputSystem(void)
 {
 	Vector2 direction = Vector2Zero();
 	if (IsKeyDown(KEY_RIGHT))
@@ -352,7 +352,8 @@ void DirectionalInputSystem(void)
 	if (IsKeyDown(KEY_UP))
 		direction.y--;
 
-	components.directionalInputComponent.direction = direction;
+	components.inputComponent.direction = direction;
+	components.inputComponent.attack = IsMouseButtonDown(MOUSE_BUTTON_LEFT);
 }
 
 // This must be called after BeginDrawing() and before EndDrawing()
@@ -408,9 +409,9 @@ void AddSpriteComponent(int entityId, enum TextureId texId)
 	components.spriteComponents[entityId].tint = WHITE;
 }
 
-void PlayerInputSystem(void)
+void VelocityInputSystem(void)
 {
-	Vector2 direction = components.directionalInputComponent.direction;
+	Vector2 direction = components.inputComponent.direction;
 	direction = Vector2Normalize(direction);
 	Vector2 newVel = Vector2Scale(direction, playerSpeed);
 
@@ -455,7 +456,7 @@ void ApplyVelocitySystem(float delta)
 void InitializeEntityComponentList(void)
 {
 	// Initialize Single Components
-	components.directionalInputComponent.direction = Vector2Zero();
+	components.inputComponent.direction = Vector2Zero();
 
 	// Initialize Components
 	for (int i = 0; i < MAX_ENTITIES; i++)
@@ -492,6 +493,7 @@ int NewEntity(void)
 	components.entityIsActive[entityId] = true;
 	// Give the entity a flags component with default values
 	components.flagsComponents[entityId].entityId = entityId;
+	components.flagsComponents[entityId].receiveDirectionalInput = false;
 	components.flagsComponents[entityId].receiveDirectionalInput = false;
 	components.flagsComponents[entityId].faceVel = FACE_NONE;
 
@@ -542,6 +544,7 @@ int NewPlayer(void)
 	components.positionComponents[playerId].entityId = playerId;
 	components.velocityComponents[playerId].entityId = playerId;
 	AddSpriteComponent(playerId, TEX_PLAYER);
+	components.flagsComponents[playerId].receiveDirectionalInput = true;
 	components.flagsComponents[playerId].receiveDirectionalInput = true;
 	components.flagsComponents[playerId].faceVel = FACE_X;
 
